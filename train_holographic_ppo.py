@@ -329,7 +329,7 @@ def parse_args():
     p.add_argument('--lr',             type=float, default=0.3)
     p.add_argument('--epsilon',        type=float, default=0.02,
                    help='PPO 截断参数 ε')
-    p.add_argument('--pixel_grouping', type=int,   default=1,
+    p.add_argument('--pixel_grouping', type=int,   default=4,
                    help='像素分组大小 g；g=1 → DOF=256')
     p.add_argument('--eval_every',     type=int,   default=20)
     p.add_argument('--save_dir',       type=str,   default='./results')
