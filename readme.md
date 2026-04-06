@@ -1,0 +1,1 @@
+我要你复现目录下的这篇Model-free optical processors using in situ reinforcement learning with proximal policy optimization.pdf论文中MNIST数据集这一个实验的PPO算法，其他的你不要复现。着重看一下这个实验对应的图fig.7，注意，只需要复现PPO的算法，不要复现PG的

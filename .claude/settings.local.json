@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python train_holographic_ppo.py --n_iter 5 --M 8 --eval_every 1)"
+    ]
+  }
+}
