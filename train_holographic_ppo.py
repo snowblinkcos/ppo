@@ -150,9 +150,14 @@ class HolographicTask:
 # 训练循环
 # ---------------------------------------------------------------------------
 
-def train(task, policy, trainer, n_iter, M, eval_every, snap_iters):
+def train(task, policy, trainer, n_iter, M, eval_every, snap_iters,
+          sigma_final: float = None):
     """
     执行 PPO 训练循环。
+
+    Args:
+        sigma_final : 若指定，则 sigma 从初始值线性退火到 sigma_final；
+                      退火有助于后期精细收敛，推荐设为 sigma/4 左右。
 
     Returns:
         times_sec : list[float] —— 每次评估的 wall-clock 时间 (s)
@@ -165,7 +170,15 @@ def train(task, policy, trainer, n_iter, M, eval_every, snap_iters):
     seen_snaps = set()
     t0 = time.time()
 
+    sigma_init = policy.sigma
+    do_anneal  = (sigma_final is not None) and (sigma_final < sigma_init)
+
     for it in range(1, n_iter + 1):
+        # sigma 线性退火：前期大探索，后期精细收敛
+        if do_anneal:
+            alpha = (it - 1) / max(n_iter - 1, 1)
+            policy.sigma = sigma_init * (1.0 - alpha) + sigma_final * alpha
+
         phi    = policy.sample(M)
         losses = task.compute_losses(phi)
         trainer.update(phi, losses)
@@ -182,8 +195,11 @@ def train(task, policy, trainer, n_iter, M, eval_every, snap_iters):
                 seen_snaps.add(it)
 
             if it % (eval_every * 10) == 0 or it == 1 or it == n_iter:
-                print(f"  iter={it:4d}  t={t:.1f}s  PSNR={p:.2f} dB")
+                sigma_str = f"  σ={policy.sigma:.3f}" if do_anneal else ""
+                print(f"  iter={it:4d}  t={t:.1f}s  PSNR={p:.2f} dB{sigma_str}")
 
+    # 恢复初始 sigma（避免多目标训练时状态污染）
+    policy.sigma = sigma_init
     return times_sec, psnr_vals, snapshots
 
 
@@ -320,7 +336,7 @@ def save_phase_pattern(phase, path, title):
 
 def parse_args():
     p = argparse.ArgumentParser(description='全息图像生成实验复现 (论文 Fig. 5)')
-    p.add_argument('--n_iter',         type=int,   default=10000)
+    p.add_argument('--n_iter',         type=int,   default=1000)
     p.add_argument('--M',              type=int,   default=256,
                    help='每轮采样数（论文物理：32；仿真推荐：256）')
     p.add_argument('--K',              type=int,   default=4,
@@ -329,6 +345,8 @@ def parse_args():
     p.add_argument('--lr',             type=float, default=0.3)
     p.add_argument('--epsilon',        type=float, default=0.02,
                    help='PPO 截断参数 ε')
+    p.add_argument('--sigma_final',    type=float, default=None,
+                   help='sigma 退火终止值；None = 不退火（推荐设为 sigma 的 1/3，如 0.05）')
     p.add_argument('--pixel_grouping', type=int,   default=4,
                    help='像素分组大小 g；g=1 → DOF=256')
     p.add_argument('--eval_every',     type=int,   default=20)
@@ -390,7 +408,8 @@ def main():
 
         t_vals, p_vals, snaps = train(
             task, policy, trainer,
-            args.n_iter, args.M, args.eval_every, snap_iters)
+            args.n_iter, args.M, args.eval_every, snap_iters,
+            sigma_final=args.sigma_final)
 
         all_results[target_name] = (t_vals, p_vals, snaps)
 

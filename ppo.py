@@ -147,7 +147,7 @@ class PPOTrainer:#
 
         # Advantages: A = −L,  normalized
         adv      = -losses#将损失值转换为优势值 A，优势值的定义是 A = -L，即损失越小优势越大。这个转换是因为 PPO 的目标是最大化优势值，而不是最小化损失值。
-        adv_norm = (adv - adv.mean()) / (adv.std() + 1e-8)
+        adv_norm = (adv - adv.mean()) / (adv.std().clamp(min=1e-3))
         adv_norm = adv_norm.detach()
 
         # Old log-probabilities (fixed reference for ratio)
@@ -159,15 +159,26 @@ class PPOTrainer:#
             self.optimizer.zero_grad()
 
             log_prob_new = self.policy.log_prob(phi_samples)
-            log_ratio    = (log_prob_new - log_prob_old).clamp(-5.0, 5.0)#裁剪，如果过大就舍去，避免数值不稳定
-            r            = torch.exp(log_ratio)#计算概率比 r = π_θ(φ) / π_θ_old(φ)，其中 π_θ(φ) 是当前策略下的概率密度，π_θ_old(φ) 是采样时策略下的概率密度。通过对 log-probability 的差值进行指数运算得到概率比 r，这个值将被用来计算 PPO 的损失函数，从而指导策略的更新。通过 clamp(-5.0, 5.0) 来限制 log_ratio 的范围，避免在计算 r 时出现数值不稳定的问题。
+            log_ratio    = (log_prob_new - log_prob_old).clamp(-5.0, 5.0)
+            r            = torch.exp(log_ratio)
 
-            surr1 = r * adv_norm#计算 PPO 的第一个损失项 surr1 = r * A'，其中 r 是概率比，A' 是归一化的优势值。这个项表示了在当前策略下，相对于旧策略的优势值乘以概率比的结果，是 PPO 损失函数中的核心部分。
-            surr2 = r.clamp(1.0 - self.epsilon, 1.0 + self.epsilon) * adv_norm#计算 PPO 的第二个损失项 surr2 = clip(r, 1−ε, 1+ε) * A'，其中 clip(r, 1−ε, 1+ε) 表示将概率比 r 限制在 [1−ε, 1+ε] 的范围内。这个项用于实现 PPO 的剪切机制，防止策略更新过大导致性能崩溃。通过比较 surr1 和 surr2，PPO 的损失函数能够在保证策略更新有效的同时，限制更新的幅度，从而提高训练的稳定性。
+            surr1 = r * adv_norm
+            surr2 = r.clamp(1.0 - self.epsilon, 1.0 + self.epsilon) * adv_norm
             ppo_loss = -torch.min(surr1, surr2).mean()
 
             ppo_loss.backward()
-            self.optimizer.step() 
+
+            # 梯度裁剪：防止 sigma 小时梯度 (phi-mu)/sigma² 爆炸导致 NaN
+            torch.nn.utils.clip_grad_norm_(self.policy.parameters(), max_norm=1.0)
+
+            # NaN 守卫：若梯度仍含 NaN 则跳过本步更新，保留参数
+            grads_ok = all(
+                p.grad is None or torch.isfinite(p.grad).all()
+                for p in self.policy.parameters()
+            )
+            if grads_ok:
+                self.optimizer.step()
+
             ppo_loss_last = ppo_loss.item()
 
         return {
