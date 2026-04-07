@@ -320,7 +320,7 @@ def save_phase_pattern(phase, path, title):
 
 def parse_args():
     p = argparse.ArgumentParser(description='全息图像生成实验复现 (论文 Fig. 5)')
-    p.add_argument('--n_iter',         type=int,   default=3000)
+    p.add_argument('--n_iter',         type=int,   default=10000)
     p.add_argument('--M',              type=int,   default=256,
                    help='每轮采样数（论文物理：32；仿真推荐：256）')
     p.add_argument('--K',              type=int,   default=4,
