@@ -44,8 +44,8 @@ from ppo import GaussianPolicy, PPOTrainer
 # ---------------------------------------------------------------------------
 WAVELENGTH = 520e-9    # 520 nm
 Z          = 9.6e-2    # 9.6 cm 传播距离
-PIXEL_SIZE = 16e-6     # 像素间距
-LAYER_SIZE = 128      # 传感器平面尺寸
+PIXEL_SIZE = 8e-6     # 像素间距
+LAYER_SIZE = 256      # 传感器平面尺寸
 
 
 # ---------------------------------------------------------------------------
@@ -171,7 +171,8 @@ def train(task, policy, trainer, n_iter, M, eval_every, snap_iters,
     t0 = time.time()
 
     sigma_init = policy.sigma
-    do_anneal  = (sigma_final is not None) and (sigma_final < sigma_init)
+    # do_anneal  = (sigma_final is not None) and (sigma_final < sigma_init)
+    do_anneal = None
 
     for it in range(1, n_iter + 1):
         # sigma 线性退火：前期大探索，后期精细收敛
@@ -336,8 +337,8 @@ def save_phase_pattern(phase, path, title):
 
 def parse_args():
     p = argparse.ArgumentParser(description='全息图像生成实验复现 (论文 Fig. 5)')
-    p.add_argument('--n_iter',         type=int,   default=1000)
-    p.add_argument('--M',              type=int,   default=1024,
+    p.add_argument('--n_iter',         type=int,   default=2000)
+    p.add_argument('--M',              type=int,   default=64,
                    help='每轮采样数（论文物理：32；仿真推荐：1024）')
     p.add_argument('--K',              type=int,   default=4,
                    help='PPO 内循环更新次数（论文：4）')
