@@ -1,4 +1,4 @@
-n_iter=2000, M=512, K=4, sigma=0.15, lr=0.2, epsilon=0.02
+n_iter=2000, M=1024, K=4, sigma=0.15, lr=0.2, epsilon=0.02
 
-Grating: final=14.02 dB, best=14.02 dB
-Boat: final=19.05 dB, best=19.05 dB
+Grating: final=9.83 dB, best=10.10 dB
+Boat: final=16.80 dB, best=17.24 dB
