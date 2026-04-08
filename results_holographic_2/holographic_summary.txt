@@ -1,0 +1,4 @@
+n_iter=2000, M=64, K=4, sigma=0.15, sigma_final=0.05, lr=0.2, epsilon=0.02, pixel_grouping=1, diffuser=True
+
+Grating: final=18.45 dB, best=18.64 dB
+Boat: final=20.22 dB, best=20.45 dB

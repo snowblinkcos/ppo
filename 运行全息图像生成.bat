@@ -5,18 +5,19 @@ echo  全息图像生成实验  (论文 Fig. 5)  —  PPO
 echo ============================================================
 echo.
 
-python train_holographic_ppo.py ^
-  --n_iter 1000 ^
-  --M 256 ^
+python train_holographic_ppo_yuzhe.py ^
+  --n_iter 2000 ^
+  --M 64 ^
   --K 4 ^
-  --sigma 0.3 ^
-  --lr 0.3 ^
+  --sigma 0.15 ^
+  --sigma_final 0.05 ^
+  --lr 0.2 ^
   --epsilon 0.02 ^
-  --pixel_grouping 8 ^
+  --pixel_grouping 4 ^
   --eval_every 20
 
 echo.
-echo 结果已保存到 results\ 目录：
+echo 结果已保存到 results_holographic\ 目录：
 echo   holographic_combined_psnr.png          — Fig.5b 合并PSNR曲线
 echo   holographic_grating_psnr.png           — Grating PSNR曲线
 echo   holographic_boat_psnr.png              — Boat PSNR曲线

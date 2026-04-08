@@ -398,7 +398,7 @@ def parse_args():
                    help='PPO 截断参数 epsilon')
     p.add_argument('--sigma_final', type=float, default=0.05,
                    help='sigma 退火终点；默认从 0.15 退火到 0.05')
-    p.add_argument('--pixel_grouping', type=int, default=1,
+    p.add_argument('--pixel_grouping', type=int, default=4,
                    help='相位参数分组大小；256x256 时建议至少 4，避免 PPO SNR 过低')
     p.add_argument('--eval_every', type=int, default=20)
     p.add_argument('--save_dir', type=str, default='./results_holographic')
@@ -553,7 +553,8 @@ def main():
                 f.write(f"{tname}: final={p_vals[-1]:.2f} dB, best={max(p_vals):.2f} dB\n")
 
 
-## python train_holographic_ppo_yuzhe.py --targets grating,boat --n_iter 2000 --M 64 --K 4 --pixel_grouping 1 --sigma 0.15 --sigma_final 0.05 --lr 0.2
-
 if __name__ == '__main__':
     main()
+
+
+### python train_holographic_ppo_yuzhe.py --targets grating,boat --n_iter 2000 --M 64 --K 4 --pixel_grouping 4 --sigma 0.15 --sigma_final 0.05 --lr 0.2
